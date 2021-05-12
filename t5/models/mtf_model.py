@@ -275,7 +275,8 @@ class MtfModel(T5Model):
       split: str, the mixture/task split to finetune on.
     """
     if pretrained_checkpoint_step == 0:
-      _parse_operative_config(pretrained_model_dir)
+      with gin.unlock_config():
+        gin.parse_config_file(_operative_config_path(pretrained_model_dir))
       self.train(mixture_or_task_name, finetune_steps,
                 init_checkpoint=None,
                 split=split)
