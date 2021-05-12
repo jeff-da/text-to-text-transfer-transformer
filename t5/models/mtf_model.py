@@ -274,17 +274,24 @@ class MtfModel(T5Model):
         directory.
       split: str, the mixture/task split to finetune on.
     """
-    if pretrained_checkpoint_step == -1:
-      checkpoint_step = _get_latest_checkpoint_from_dir(pretrained_model_dir)
+    if pretrained_checkpoint_step == 0:
+      _parse_operative_config(pretrained_model_dir)
+      self.train(mixture_or_task_name, finetune_steps,
+                init_checkpoint=None,
+                split=split)
     else:
-      checkpoint_step = pretrained_checkpoint_step
-    with gin.unlock_config():
-      gin.parse_config_file(_operative_config_path(pretrained_model_dir))
+      if pretrained_checkpoint_step == -1:
+        checkpoint_step = utils.get_latest_checkpoint_from_dir(
+            pretrained_model_dir)
+      else:
+        checkpoint_step = pretrained_checkpoint_step
+      with gin.unlock_config():
+        gin.parse_config_file(_operative_config_path(pretrained_model_dir))
 
-    model_ckpt = "model.ckpt-" + str(checkpoint_step)
-    self.train(mixture_or_task_name, checkpoint_step + finetune_steps,
-               init_checkpoint=os.path.join(pretrained_model_dir, model_ckpt),
-               split=split)
+      model_ckpt = "model.ckpt-" + str(checkpoint_step)
+      self.train(mixture_or_task_name, checkpoint_step + finetune_steps,
+                init_checkpoint=os.path.join(pretrained_model_dir, model_ckpt),
+                split=split)
 
   def predict(self, input_file, output_file, checkpoint_steps=-1,
               beam_size=1, temperature=1.0,
